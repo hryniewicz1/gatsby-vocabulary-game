@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gatsby Vocabulary — The Golden Age Match</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Libre+Baskerville:wght@400;700&display=swap');
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:'Libre Baskerville',serif;background:radial-gradient(circle at 50% 0%,#26364a 0,#111923 48%,#070b10 100%);color:#f7edc7}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(120deg,transparent 0 18px,rgba(226,190,83,.025) 19px 20px)}
+.wrap{max-width:1200px;margin:auto;padding:28px 20px 45px}
+header{text-align:center;border-bottom:1px solid #9d8440;padding:10px 0 22px}
+.kicker{font-size:12px;letter-spacing:5px;color:#d9bd61}
+h1{font-family:Cinzel,serif;font-size:clamp(30px,5vw,54px);margin:9px 0 5px;text-shadow:0 3px 15px #000}
+.subtitle{color:#d9d0b5;font-size:14px}
+.stats{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px 0}
+.stat{background:#111a25;border:1px solid #806a34;border-radius:10px;padding:10px 18px;text-align:center}
+.stat b{display:block;font-family:Cinzel,serif;font-size:20px;color:#efd477}
+.game{display:grid;grid-template-columns:330px 1fr;gap:20px}
+.panel{background:rgba(12,18,27,.9);border:1px solid #6f5b2f;border-radius:14px;padding:20px;box-shadow:0 12px 35px #0007}
+h2{font-family:Cinzel,serif;font-size:19px;color:#efd477;margin:0 0 14px}
+.word{user-select:none;cursor:grab;padding:13px 12px;margin:9px 0;border:1px solid #8c7437;border-radius:8px;background:linear-gradient(135deg,#1c2b3c,#111b27);text-align:center;font-family:Cinzel,serif;font-weight:700;letter-spacing:.4px;transition:.15s}
+.word:hover{transform:translateY(-2px);border-color:#f0d36f;box-shadow:0 5px 15px #0008}
+.word.dragging{opacity:.35}
+body.dragging-word .definition{cursor:copy}
+.definition.over{transform:scale(1.01)}
+.word.matched-word{opacity:.5;cursor:default;border-color:#5f6b5f}
+.definition{min-height:82px;position:relative;z-index:1;padding:16px 14px;margin:12px 0;cursor:copy;border:1px dashed #77715f;border-radius:8px;background:#141c25;transition:.15s}
+.definition.over{border-color:#efd477;background:#1c2937}
+.definition.correct{border:1px solid #73b985;background:#12271d;cursor:default}
+.definition.wrong{border-color:#c06a62;animation:shake .25s}
+.definition .answer{display:inline-block;margin-top:8px;padding:5px 9px;border-radius:6px;background:#294f37;color:#d7f0dc;font-family:Cinzel,serif;font-weight:700}
+button{font-family:Cinzel,serif;background:#d6b653;color:#111;border:0;border-radius:8px;padding:12px 20px;font-weight:700;cursor:pointer}
+button:hover{background:#f0d477}
+.controls{text-align:center;margin-top:20px}
+#message{text-align:center;min-height:25px;color:#efd477;font-weight:bold}
+.overlay{position:fixed;inset:0;background:#05080de9;display:none;align-items:center;justify-content:center;padding:20px;z-index:5}
+.modal{max-width:520px;text-align:center;background:#101923;border:2px solid #a6893e;border-radius:18px;padding:35px;box-shadow:0 20px 80px #000}
+.modal h3{font-family:Cinzel,serif;font-size:34px;color:#efd477;margin:0 0 10px}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media(max-width:850px){.game{grid-template-columns:1fr}.panel:first-child{order:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="kicker">THE GREAT GATSBY • VOCABULARY</div>
+<h1>The Golden Age Match</h1>
+<div class="subtitle">Drag each word directly onto its matching definition. You can also drag a word again if you make a mistake.</div>
+</header>
+<div class="stats">
+<div class="stat">SCORE <b id="score">0</b></div>
+<div class="stat">CORRECT <b id="correct">0 / 10</b></div>
+<div class="stat">TIME <b id="time">00:00</b></div>
+<div class="stat">STREAK <b id="streak">0</b></div>
+</div>
+<div id="message">The party is waiting. Make your first match!</div>
+<div class="game">
+<section class="panel"><h2>Vocabulary</h2><div id="words"></div></section>
+<section class="panel"><h2>Definitions</h2><div style="font-size:12px;color:#bdb49c;margin:-5px 0 12px;">Drop zones are intentionally large — place the word anywhere inside the definition box.</div><div id="defs"></div></section>
+</div>
+<div class="controls"><button onclick="location.reload()">↻ New Game</button></div>
+</div>
+
+<div class="overlay" id="overlay">
+<div class="modal">
+<h3>Old Sport, You Did It!</h3>
+<p>You matched all 10 vocabulary words.</p>
+<p><strong id="finalScore"></strong></p>
+<p id="finalTime"></p>
+<button onclick="location.reload()">Play Again</button>
+</div>
+</div>
+
+<script>
+const items=[
+["Ambiguous","Open to more than one interpretation; unclear or uncertain."],
+["Apathetic","Showing little interest, concern, or emotion."],
+["Coherence","The quality of being logical, consistent, and easy to understand."],
+["Condescend","To behave as though you are superior to someone; to treat someone patronizingly."],
+["Contemptuous","Showing strong disrespect or a feeling that someone or something is beneath consideration."],
+["Cynical","Distrustful of people's motives; believing that people are mainly selfish or dishonest."],
+["Homogeneity","The state of being alike or uniform throughout; sameness."],
+["Poignant","Evoking a strong feeling of sadness, tenderness, or emotional significance."],
+["Notoriety","The state of being widely known, especially for something negative or undesirable."],
+["Vehement","Showing strong, intense, or passionate feeling."]
+];
+const shuffle=a=>[...a].sort(()=>Math.random()-.5);
+let score=0, matched=0, streak=0, seconds=0, started=false, timer=null;
+const words=document.getElementById("words"), defs=document.getElementById("defs");
+function startTimer(){if(started)return;started=true;timer=setInterval(()=>{seconds++;document.getElementById("time").textContent=new Date(seconds*1000).toISOString().substr(14,5)},1000)}
+shuffle(items).forEach(([w])=>{
+ const e=document.createElement("div");e.className="word";e.draggable=true;e.textContent=w;e.dataset.word=w;
+ e.ondragstart=x=>{startTimer();x.dataTransfer.effectAllowed="move";x.dataTransfer.setData("text/plain",w);e.classList.add("dragging");document.body.classList.add("dragging-word")};
+ e.ondragend=()=>{e.classList.remove("dragging");document.body.classList.remove("dragging-word")};words.appendChild(e);
+});
+
+// Help the page scroll while a word is being dragged toward lower definitions.
+document.addEventListener("dragover", x=>{
+  const edge=90, speed=18;
+  if(x.clientY < edge) window.scrollBy(0,-speed);
+  else if(x.clientY > window.innerHeight-edge) window.scrollBy(0,speed);
+});
+
+shuffle(items).forEach(([w,d])=>{
+ const e=document.createElement("div");e.className="definition";e.dataset.answer=w;e.innerHTML=d;
+ e.ondragover=x=>{x.preventDefault();e.classList.add("over")};e.ondragleave=()=>e.classList.remove("over");
+ e.ondrop=x=>{
+  x.preventDefault();e.classList.remove("over");if(e.classList.contains("correct"))return;
+  startTimer();const got=x.dataTransfer.getData("text/plain");const target=e.dataset.answer;
+  if(got===target){
+   e.classList.add("correct");e.innerHTML=d+'<div class="answer">'+got+'</div>';
+   const el=[...document.querySelectorAll(".word")].find(word=>word.dataset.word===got);if(el){el.draggable=false;el.classList.add("matched-word");}
+   matched++;streak++;score+=100+(streak-1)*25;
+   document.getElementById("score").textContent=score;document.getElementById("correct").textContent=matched+" / 10";document.getElementById("streak").textContent=streak;
+   document.getElementById("message").textContent=streak>1?"Excellent! Keep the streak alive.":"A perfect match!";
+   if(matched===10){clearInterval(timer);document.getElementById("finalScore").textContent="Final score: "+score+" points";document.getElementById("finalTime").textContent="Time: "+document.getElementById("time").textContent;document.getElementById("overlay").style.display="flex";}
+  }else{streak=0;document.getElementById("streak").textContent=0;e.classList.add("wrong");document.getElementById("message").textContent="Not quite — try another word.";setTimeout(()=>e.classList.remove("wrong"),300)}
+ };defs.appendChild(e);
+});
+</script>
+</body>
+</html>
